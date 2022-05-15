@@ -1,18 +1,34 @@
+import 'package:arweave/arweave.dart';
+import 'package:graphql/client.dart';
+
 import 'arweave/arweave_service.dart';
 import 'entities/entity_metadata.dart';
 import 'entities/entity_snapshot.dart';
 
-abstract class IArioStore {
+class ArioStoreOptions {
+  ArioStoreOptions({required this.gatewayUrl});
+
+  final String gatewayUrl;
+}
+
+abstract class ArioStore {
   EntityMetadata getEntityMetadata(String entityId);
   Future<List<EntityMetadata>> getEntitiesMetadataFromCollection(
       CollectionSnapshot collection);
-  Future<CollectionSnapshot> getRootFolder(DriveSnapshot driveMetadata);
-  Future<EntitySnapshot> getEntitySnapshot(EntityMetadata metadata);
   Future<List<DriveMetadata>> getPublicDrivesFromOwner(String owner);
+  Future<CollectionSnapshot> getCollectionFromEntityMetadata(
+      EntityMetadata metadata);
+  Future<EntitySnapshot> getEntitySnapshot(EntityMetadata metadata);
+
+  factory ArioStore(ArioStoreOptions options) => _ArioStore(ArweaveService(
+      GraphQLClient(
+          link: HttpLink('${options.gatewayUrl}/graphql'),
+          cache: GraphQLCache()),
+      Arweave(gatewayUrl: Uri.parse(options.gatewayUrl))));
 }
 
-class ArioStore implements IArioStore {
-  ArioStore(this.arweaveService);
+class _ArioStore implements ArioStore {
+  _ArioStore(this.arweaveService);
 
   final ArweaveService arweaveService;
 
@@ -80,5 +96,12 @@ class ArioStore implements IArioStore {
         name: folderSnapshot.name,
         metadata: folderSnapshot.metadata,
         children: children);
+  }
+
+  @override
+  Future<CollectionSnapshot<EntityMetadata>> getCollectionFromEntityMetadata(
+      EntityMetadata metadata) {
+    // TODO: implement getCollectionFromEntityMetadata
+    throw UnimplementedError();
   }
 }
