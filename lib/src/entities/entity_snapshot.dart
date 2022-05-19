@@ -1,6 +1,4 @@
-import 'package:ario_store/src/entities/entity_metadata.dart';
-
-import 'entity.dart';
+import 'package:ario_store/src/entities.dart';
 
 abstract class EntitySnapshot<T extends EntityMetadata> extends Entity {
   EntitySnapshot({required String name, required this.metadata}) : super(name);
@@ -8,8 +6,19 @@ abstract class EntitySnapshot<T extends EntityMetadata> extends Entity {
 }
 
 class FileSnapshot extends EntitySnapshot<FileMetadata> {
-  FileSnapshot({required String name, required FileMetadata metadata})
+  FileSnapshot(
+      {required String name,
+      required FileMetadata metadata,
+      required this.dataContentType,
+      required this.dataTxId,
+      required this.lastModifiedDate,
+      required this.size})
       : super(name: name, metadata: metadata);
+
+  int size;
+  DateTime lastModifiedDate;
+  String dataTxId;
+  String dataContentType;
 }
 
 class FolderSnapshot extends EntitySnapshot<FolderMetadata> {
@@ -48,4 +57,13 @@ class DriveCollection extends CollectionSnapshot<DriveMetadata> {
       required DriveMetadata metadata,
       required List<EntitySnapshot<EntityMetadata>> children})
       : super(name: name, metadata: metadata, children: children);
+}
+
+class CollectionRevision<T extends EntitySnapshot> extends CollectionSnapshot {
+  CollectionRevision(
+      {required this.itself,
+      required List<EntitySnapshot<EntityMetadata>> children})
+      : super(name: itself.name, metadata: itself.metadata, children: children);
+
+  EntitySnapshot itself;
 }

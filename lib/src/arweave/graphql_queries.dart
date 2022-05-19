@@ -33,19 +33,22 @@ query DriveEntityHistory($folderId: String!, $lastBlockHeight: Int) {
 
 """;
 
-const queryEntity = r"""
+const queryEntityList = r"""
 
-query DriveEntityHistory($driveId: String!, $lastBlockHeight: Int, $tag: String!) {
+query queryEntity($driveId: String!, $after: String, $lastBlockHeight: Int, $tag: String!) {
   transactions(
     first: 100
     sort: HEIGHT_ASC
     tags: [
       { name: "ArFS", values: ["0.10", "0.11"] }
       { name: $tag, values: [$driveId] }
-      { name: "Entity-Type", values: ["folder", "file"] }
     ]
     block: {min: $lastBlockHeight}
+    after: $after,
   ) {
+    pageInfo {
+      hasNextPage
+    }
     edges {
       node {
         id
