@@ -1,9 +1,8 @@
+import 'package:ario_store/ario_store.dart';
 import 'package:arweave/arweave.dart';
 import 'package:graphql/client.dart';
 
 import 'arweave/arweave_service.dart';
-import 'entities/entity_metadata.dart';
-import 'entities/entity_snapshot.dart';
 
 class ArioStoreOptions {
   ArioStoreOptions({required this.gatewayUrl});
@@ -16,9 +15,9 @@ abstract class ArioStore {
   Future<List<EntityMetadata>> getEntitiesMetadataFromCollection(
       CollectionSnapshot collection);
   Future<List<DriveMetadata>> getPublicDrivesFromOwner(String owner);
-  Future<CollectionSnapshot> getCollectionFromEntityMetadata(
-      EntityMetadata metadata);
   Future<EntitySnapshot> getEntitySnapshot(EntityMetadata metadata);
+  Future<CollectionSnapshot> getCollection(EntitySnapshot snapshot);
+  Future<CollectionSnapshot> getRootFolder(DriveSnapshot driveSnapshot);
 
   factory ArioStore(ArioStoreOptions options) => _ArioStore(ArweaveService(
       GraphQLClient(
@@ -42,7 +41,6 @@ class _ArioStore implements ArioStore {
     return arweaveService.getEntitySnapshot(metadata);
   }
 
-  // TODO(thiagocarvalho): Filter by type.
   @override
   Future<List<EntityMetadata>> getEntitiesMetadataFromCollection(
       CollectionSnapshot collection) async {
@@ -58,50 +56,45 @@ class _ArioStore implements ArioStore {
   }
 
   @override
-  Future<CollectionSnapshot> getRootFolder(DriveSnapshot driveSnapshot) async {
-    final folderMetadata =
-        await arweaveService.getFolderMetadata(driveSnapshot.rootFolderId);
-
-    final folderSnapshot =
-        await arweaveService.getEntitySnapshot(folderMetadata);
-
-    final rootFolderChildren =
-        await arweaveService.getFolderChildren(driveSnapshot.rootFolderId);
+  Future<CollectionSnapshot<EntityMetadata>> getCollection(
+      EntitySnapshot<EntityMetadata> snapshot) async {
+    final metadatas = await arweaveService
+        .getEntitiesMetadatasFromEntityMetadata(snapshot.metadata);
 
     final List<EntitySnapshot<EntityMetadata>> children = [];
 
-    children.addAll(await Future.wait(rootFolderChildren.map((e) async {
-      return arweaveService.getEntitySnapshot(e);
-    })));
+    children.addAll(await Future.wait(
+        metadatas.map((e) => arweaveService.getEntitySnapshot(e))));
 
-    CollectionSnapshot collection = FolderCollection(
-        name: folderSnapshot.name,
-        metadata: folderSnapshot.metadata as FolderMetadata,
-        children: children);
-
-    return collection;
+    switch (snapshot.runtimeType) {
+      case FolderSnapshot:
+        return FolderCollection(
+            name: snapshot.name,
+            metadata: snapshot.metadata as FolderMetadata,
+            children: children);
+      case DriveSnapshot:
+        return DriveCollection(
+            name: snapshot.name,
+            metadata: snapshot.metadata as DriveMetadata,
+            children: children);
+      default:
+        throw Exception('${snapshot.runtimeType} is not supported');
+    }
   }
 
   Future<CollectionSnapshot> getCollectionFromFolder(
       FolderSnapshot folderSnapshot) async {
-    final folderChildrenMetadatas =
-        await arweaveService.getFolderChildren(folderSnapshot.metadata.id);
-
-    final List<EntitySnapshot<EntityMetadata>> children = [];
-
-    children.addAll(await Future.wait(folderChildrenMetadatas
-        .map((e) => arweaveService.getEntitySnapshot(e))));
-
-    return FolderCollection(
-        name: folderSnapshot.name,
-        metadata: folderSnapshot.metadata,
-        children: children);
+    return getCollection(folderSnapshot);
   }
 
   @override
-  Future<CollectionSnapshot<EntityMetadata>> getCollectionFromEntityMetadata(
-      EntityMetadata metadata) {
-    // TODO: implement getCollectionFromEntityMetadata
-    throw UnimplementedError();
+  Future<CollectionSnapshot> getRootFolder(DriveSnapshot driveSnapshot) async {
+    final folderMetadata =
+        await arweaveService.getFolderMetadata(driveSnapshot.rootFolderId);
+
+    final rootFolderSnapshot =
+        await arweaveService.getEntitySnapshot(folderMetadata);
+
+    return getCollection(rootFolderSnapshot);
   }
 }

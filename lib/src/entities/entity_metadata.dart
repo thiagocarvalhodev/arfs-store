@@ -5,6 +5,7 @@ abstract class EntityMetadata {
     required this.arFS,
     required this.contentType,
     required this.unixTime,
+    this.entityType,
   });
 
   String id;
@@ -25,12 +26,14 @@ class DriveMetadata extends EntityMetadata {
       required String arFS,
       required String contentType,
       required DateTime unixTime,
-      required String transactionId})
+      required String transactionId,
+      required EntityType entityType})
       : super(
             id: id,
             arFS: arFS,
             contentType: contentType,
             unixTime: unixTime,
+            entityType: entityType,
             transactionId: transactionId);
 }
 
@@ -42,12 +45,14 @@ class FolderMetadata extends EntityMetadata {
       required DateTime unixTime,
       required this.driveId,
       required String transactionId,
+      required EntityType entityType,
       this.parentFolderId})
       : super(
             id: id,
             arFS: arFS,
             contentType: contentType,
             unixTime: unixTime,
+            entityType: entityType,
             transactionId: transactionId);
 
   String? parentFolderId;
@@ -62,11 +67,13 @@ class FileMetadata extends EntityMetadata {
       required String contentType,
       required DateTime unixTime,
       required this.driveId,
+      required EntityType entityType,
       this.parentFolderId})
       : super(
             id: id,
             transactionId: transactionId,
             arFS: arFS,
+            entityType: entityType,
             contentType: contentType,
             unixTime: unixTime);
   String? parentFolderId;

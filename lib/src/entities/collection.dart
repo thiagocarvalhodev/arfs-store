@@ -1,4 +1,4 @@
-import 'entity.dart';
+import 'package:ario_store/src/entities.dart';
 
 abstract class Collection extends Entity {
   Collection(this.children, String id) : super(id);
