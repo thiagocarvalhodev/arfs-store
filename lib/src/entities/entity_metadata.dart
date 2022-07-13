@@ -61,14 +61,14 @@ class FolderMetadata extends EntityMetadata {
 
 class FileMetadata extends EntityMetadata {
   FileMetadata(
-      {required String id,
+      {this.parentFolderId,
+      required this.driveId,
+      required String id,
       required String transactionId,
       required String arFS,
       required String contentType,
       required DateTime unixTime,
-      required this.driveId,
-      required EntityType entityType,
-      this.parentFolderId})
+      required EntityType entityType})
       : super(
             id: id,
             transactionId: transactionId,

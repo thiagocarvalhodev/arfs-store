@@ -2,7 +2,7 @@ const queryFolder = r"""
 query DriveEntityHistory($folderId: String!, $lastBlockHeight: Int) {
   transactions(
     first: 1
-    sort: HEIGHT_ASC
+    sort: HEIGHT_DESC
     tags: [
       { name: "ArFS", values: ["0.10", "0.11"] }
       { name: "Folder-Id", values: [$folderId] }

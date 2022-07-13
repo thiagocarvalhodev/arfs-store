@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:ario_store/ario_store.dart';
 import 'package:arweave/arweave.dart';
 import 'package:graphql/client.dart';
@@ -11,7 +13,7 @@ class ArioStoreOptions {
 }
 
 abstract class ArioStore {
-  EntityMetadata getEntityMetadata(String entityId);
+  Future<EntityMetadata> getEntityMetadata(String entityId);
   Future<List<EntityMetadata>> getEntitiesMetadataFromCollection(
       CollectionSnapshot collection);
   Future<List<DriveMetadata>> getPublicDrivesFromOwner(String owner);
@@ -32,7 +34,8 @@ class _ArioStore implements ArioStore {
   final ArweaveService arweaveService;
 
   @override
-  EntityMetadata getEntityMetadata(String entityId) {
+  Future<EntityMetadata> getEntityMetadata(String entityId) {
+    // TODO(@thiagocarvalhodev): Implement
     throw UnimplementedError();
   }
 
@@ -63,8 +66,8 @@ class _ArioStore implements ArioStore {
 
     final List<EntitySnapshot<EntityMetadata>> children = [];
 
-    children.addAll(await Future.wait(
-        metadatas.map((e) => arweaveService.getEntitySnapshot(e))));
+    children.addAll(_mountUniqueEntities(await Future.wait(
+        metadatas.map((e) => arweaveService.getEntitySnapshot(e)))));
 
     switch (snapshot.runtimeType) {
       case FolderSnapshot:
@@ -96,5 +99,19 @@ class _ArioStore implements ArioStore {
         await arweaveService.getEntitySnapshot(folderMetadata);
 
     return getCollection(rootFolderSnapshot);
+  }
+
+  List<EntitySnapshot> _mountUniqueEntities(List<EntitySnapshot> snapshots) {
+    HashMap<String, EntitySnapshot> hashMap =
+        HashMap<String, EntitySnapshot>.fromIterable(snapshots,
+            key: (element) => element.metadata.id, value: (element) => element);
+
+    List<EntitySnapshot> uniqueEntities = [];
+
+    for (var k in hashMap.keys) {
+      uniqueEntities.add(hashMap[k]!);
+    }
+
+    return uniqueEntities;
   }
 }

@@ -1,4 +1,5 @@
-import 'package:ario_store/src/entities.dart';
+import 'package:ario_store/ario_store.dart';
+import 'package:ario_store/entities.dart';
 
 abstract class EntitySnapshot<T extends EntityMetadata> extends Entity {
   EntitySnapshot({required String name, required this.metadata}) : super(name);
